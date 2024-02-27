@@ -55,12 +55,6 @@ contract TANGEngine is ReentrancyGuard{
     // 质押BTC/ETH 获得 稳定币 TangStableToken
     function depositAndGetTANG(address token, uint256 amount, uint256 tangAmount) external checkTokenParam(token,amount) nonReentrant {
         
-        // // 判断抵押物价值是否满足提取稳定币数量的阈值
-        // uint256 tokenValue = _getTokenValue(token,amount);
-        // if((tangAmount * LIQUIDATION_RATIO) / LIQUIDATION_PRECISION >= tokenValue){
-        //     revert TANGEngine_TokenValueNotEnough();
-        // }
-        
         IERC20(token).transferFrom(msg.sender, address(this), amount);
         s_userTokenBalance[msg.sender][token] += amount;
 
