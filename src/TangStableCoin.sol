@@ -22,13 +22,20 @@ contract TangStableCoin is ERC20, ERC20Burnable, Ownable {
         emit TangStableCoin_Mint(to, amount);
     }
     /**
-     * 只提供给稳定币引擎合约调用，不容许用户销毁其他人的token 用户只能销毁自己的token
+     * 只提供给稳定币引擎合约调用，不容许用户销毁token
      * @param account 被销毁token的地址
      * @param value 销毁的数量
      */
     function burnFrom(address account, uint256 value) public override onlyOwner {
         _burn(account, value);
         emit TangStableCoin_Burn(account, value);
+    }
+    /**
+     * 销毁稳定币引擎自己的稳定币
+     * @param value 销毁的数量
+     */
+    function burn(uint256 value) public override onlyOwner {
+        _burn(_msgSender(), value);
     }
 
 
