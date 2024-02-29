@@ -16,6 +16,7 @@ contract TANGEngine is ReentrancyGuard{
     error TANGEngine_TokenValueNotEnough();
     error TANGEngine_HealthFactorBad();
     error TANGEngine_InvalidAmount();
+    error TANGEngine_RedeemCollateralTooMuch();
 
     address[] public s_tokensContractddress;
     mapping (address tokenAddress => address tokenPriceDataFeedAddress)  public s_tokensPriceDataFeed;
@@ -32,6 +33,9 @@ contract TANGEngine is ReentrancyGuard{
     event TANGEngine_HealthFactorNotGOOD(uint256 indexed tangStableCoinValue, uint256  indexed tokenBTCValue, uint256 indexed tokenETHValue);
     event TANGEngine_DepositToken(address account, address indexed token, uint256 indexed amount);
     event TANGEngine_MintTangStableCoin(address indexed account, uint256 indexed amount);
+    event TANGEngine_RedeemCollateral(address account, address indexed token, uint256 indexed amount);
+    event TANGEngine_BurnTANG(address indexed account, uint256 indexed amount);
+    event TANGEngine_Liquidation(address indexed liquidator, address indexed targetAccount, address indexed tokenaddress, uint256 tokenAmount, uint256 tangDebt);
 
     
     constructor(address tangStableCoin, address[] memory tokensContractddress,address[] memory tokensPriceDataFeed) {
@@ -85,16 +89,11 @@ contract TANGEngine is ReentrancyGuard{
         s_userTokenBalance[msg.sender][token] += amount;
         emit TANGEngine_DepositToken(msg.sender, token, amount);
     }
-    // TODO
+
     // 用稳定币赎回抵押物
     function redeemCollateralForTANG(address tokenAddress, uint256 tangAmount) external checkTANGParam(tangAmount) nonReentrant {
 
-        uint256 tangValue = ( tangAmount * (LIQUIDATION_RATIO-LIQUIDATION_PRECISION)) / LIQUIDATION_PRECISION;
-
-        AggregatorV3Interface priceFeed = AggregatorV3Interface(s_tokensPriceDataFeed[tokenAddress]);
-        (,int price,,,) = priceFeed.latestRoundData();
-
-        uint256 tokenAmount = (tangValue * PRICE_DATA_FEED_DECIMALS) / uint256(price);
+        uint256 tokenAmount = _getTokenAmountWhenBurnTANG(tangAmount,tokenAddress);
         
         _burnTANG(msg.sender, tangAmount);
         //赎回抵押物
@@ -106,12 +105,35 @@ contract TANGEngine is ReentrancyGuard{
         if(!good){
             revert TANGEngine_HealthFactorBad();
         }
+        emit TANGEngine_BurnTANG(msg.sender, tangAmount);
+        emit TANGEngine_RedeemCollateral(msg.sender, tokenAddress, tokenAmount);
 
+    }
+    //单纯赎回抵押物
+    function redeemCollateral(address tokenAddress, uint256 tokenAmount)  nonReentrant external {
+
+        if(s_tokensPriceDataFeed[tokenAddress] == address(0)){
+            revert TANGEngine_TokenNotSupported();
+        }
+        if(s_userTokenBalance[msg.sender][tokenAddress] < tokenAmount){
+            revert TANGEngine_TokenValueNotEnough();
+        }
+
+        s_userTokenBalance[msg.sender][tokenAddress] -= tokenAmount;
+        uint256 tokenValue = _getCollateralValue(msg.sender);
+
+        if((s_userTotalSupplyTANG[msg.sender] * LIQUIDATION_RATIO) / LIQUIDATION_PRECISION >= tokenValue){
+            revert TANGEngine_RedeemCollateralTooMuch();
+        }
+        IERC20(tokenAddress).transfer(msg.sender, tokenAmount);
+
+        emit TANGEngine_RedeemCollateral(msg.sender, tokenAddress, tokenAmount);
     }
 
     //销毁用户自己的稳定币
     function burnTANG(uint256 tangAmount) external checkTANGParam(tangAmount) nonReentrant {
         _burnTANG(msg.sender, tangAmount);
+        emit TANGEngine_BurnTANG(msg.sender, tangAmount);
     }
 
     //铸造稳定币
@@ -129,11 +151,55 @@ contract TANGEngine is ReentrancyGuard{
         emit TANGEngine_MintTangStableCoin(account, tangAmount);
     }
 
+    /**
+     * 清算功能
+     * @param account 被清算人的账户
+     * @param tangDebt 清算者解决的稳定币债务(清算者自己提供的稳定币)
+     * @param tokenAddress 清算的抵押资产
+     */
+    function liquidation(address account, uint256 tangDebt, address tokenAddress) external checkTANGParam(tangDebt) nonReentrant{
+
+        uint256 tokenAmount = _getTokenAmountWhenBurnTANG(tangDebt,tokenAddress);
+        _burnTANG(msg.sender, tangDebt);
+        
+        
+        //将被清算者的抵押物 转给清算者
+        if(s_userTokenBalance[account][tokenAddress] < tokenAmount){
+            revert TANGEngine_TokenValueNotEnough();
+        }
+        
+        s_userTokenBalance[account][tokenAddress] -= tokenAmount;
+        IERC20(tokenAddress).transferFrom(address(this), msg.sender, tokenAmount);
+        
+
+        //清算完以后 需要校验一下系统整体稳定性
+        bool good = _checkHealthFactorIsGood();
+        if(!good){
+            revert TANGEngine_HealthFactorBad();
+        }
+
+        emit TANGEngine_Liquidation(msg.sender, account, tokenAddress, tokenAmount, tangDebt);
+    }
+
 
 
     function _burnTANG(address owner , uint256 tangAmount) internal {
         s_userTotalSupplyTANG[owner] -= tangAmount;
         s_tangStableCoin.burnFrom(owner, tangAmount);
+    }
+    /**
+     * 计算销毁的稳定币能获得的抵押资产数量
+     * @param tangAmount 销毁的稳定币数量(要偿还的债务)
+     * @param tokenAddress 想获得的抵押资产
+     */
+    function _getTokenAmountWhenBurnTANG(uint256 tangAmount, address tokenAddress) internal view returns (uint256){
+        uint256 tangValue = ( tangAmount * (LIQUIDATION_RATIO-LIQUIDATION_PRECISION)) / LIQUIDATION_PRECISION;
+
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(s_tokensPriceDataFeed[tokenAddress]);
+        (,int price,,,) = priceFeed.latestRoundData();
+
+        uint256 tokenAmount = (tangValue * PRICE_DATA_FEED_DECIMALS) / uint256(price);
+        return tokenAmount;
     }
 
 
