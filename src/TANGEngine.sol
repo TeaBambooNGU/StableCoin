@@ -17,6 +17,7 @@ contract TANGEngine is ReentrancyGuard{
     error TANGEngine_HealthFactorBad();
     error TANGEngine_InvalidAmount();
     error TANGEngine_RedeemCollateralTooMuch();
+    error TANGEngine_TokenTransferFail();
 
     address[] public s_tokensContractddress;
     mapping (address tokenAddress => address tokenPriceDataFeedAddress)  public s_tokensPriceDataFeed;
@@ -71,7 +72,10 @@ contract TANGEngine is ReentrancyGuard{
     // 质押BTC/ETH 获得 稳定币 TangStableToken
     function depositAndGetTANG(address token, uint256 amount, uint256 tangAmount) external checkTokenParam(token,amount) nonReentrant {
         
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        bool success = IERC20(token).transferFrom(msg.sender, address(this), amount);
+        if(!success){
+            revert TANGEngine_TokenTransferFail();
+        }
         s_userTokenBalance[msg.sender][token] += amount;
 
         _checkIsCanMintTANG(msg.sender,tangAmount);
@@ -97,7 +101,10 @@ contract TANGEngine is ReentrancyGuard{
         
         _burnTANG(msg.sender, tangAmount);
         //赎回抵押物
-        IERC20(tokenAddress).transfer(msg.sender, tokenAmount);
+        bool success = IERC20(tokenAddress).transfer(msg.sender, tokenAmount);
+        if(!success){
+            revert TANGEngine_TokenTransferFail();
+        }
         s_userTokenBalance[msg.sender][tokenAddress] -= tokenAmount;
 
         //赎回抵押物 需要校验一下系统整体稳定性
@@ -125,7 +132,10 @@ contract TANGEngine is ReentrancyGuard{
         if((s_userTotalSupplyTANG[msg.sender] * LIQUIDATION_RATIO) / LIQUIDATION_PRECISION >= tokenValue){
             revert TANGEngine_RedeemCollateralTooMuch();
         }
-        IERC20(tokenAddress).transfer(msg.sender, tokenAmount);
+        bool success = IERC20(tokenAddress).transfer(msg.sender, tokenAmount);
+        if(!success){
+            revert TANGEngine_TokenTransferFail();
+        }
 
         emit TANGEngine_RedeemCollateral(msg.sender, tokenAddress, tokenAmount);
     }
@@ -169,7 +179,10 @@ contract TANGEngine is ReentrancyGuard{
         }
         
         s_userTokenBalance[account][tokenAddress] -= tokenAmount;
-        IERC20(tokenAddress).transferFrom(address(this), msg.sender, tokenAmount);
+        bool success = IERC20(tokenAddress).transferFrom(address(this), msg.sender, tokenAmount);
+        if(!success){
+            revert TANGEngine_TokenTransferFail();
+        }
         
 
         //清算完以后 需要校验一下系统整体稳定性
