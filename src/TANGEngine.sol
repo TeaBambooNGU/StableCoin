@@ -23,7 +23,7 @@ contract TANGEngine is ReentrancyGuard{
     mapping (address tokenAddress => address tokenPriceDataFeedAddress)  public s_tokensPriceDataFeed;
     TangStableCoin public s_tangStableCoin;
     // 用户抵押的资产
-    mapping (address account => mapping (address tokenAddress => uint tokenAmount)) public s_userTokenBalance;
+    mapping (address account => mapping (address tokenAddress => uint256 tokenAmount)) public s_userTokenBalance;
     // 用户已经兑换的稳定币数量
     mapping (address account => uint256 totalSupplyTANG) s_userTotalSupplyTANG;
 
@@ -47,6 +47,7 @@ contract TANGEngine is ReentrancyGuard{
             s_tokensPriceDataFeed[tokensContractddress[i]] = tokensPriceDataFeed[i];
         }
         s_tangStableCoin = TangStableCoin(tangStableCoin);
+        s_tokensContractddress = tokensContractddress;
     }
 
     modifier checkTokenParam(address token, uint256 amount) {
@@ -222,7 +223,7 @@ contract TANGEngine is ReentrancyGuard{
      * @param tangAmount 需要兑换的稳定币数量
      */
     function _checkIsCanMintTANG(address account, uint256 tangAmount) internal view {
-        if((tangAmount + s_userTotalSupplyTANG[account] * LIQUIDATION_RATIO) / LIQUIDATION_PRECISION >=  _getCollateralValue(account)){
+        if(((tangAmount + s_userTotalSupplyTANG[account]) * LIQUIDATION_RATIO) / LIQUIDATION_PRECISION >=  _getCollateralValue(account)){
             revert TANGEngine_TokenValueNotEnough();
         }
     }
@@ -272,6 +273,16 @@ contract TANGEngine is ReentrancyGuard{
     function getTokenValue(address token, uint256 amount) external view returns (uint256){
         return _getTokenValue(token,amount);
     }
+
+    function getUserCollateralAmount(address account, address tokenAddress) external view returns(uint256){
+        return s_userTokenBalance[account][tokenAddress];
+    }
+
+    function getCollateralValue(address account) external view returns (uint256){
+        return _getCollateralValue(account);
+    }
+
+
 
 
 
