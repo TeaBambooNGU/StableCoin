@@ -188,7 +188,7 @@ contract TANGEngine is ReentrancyGuard{
      */
     function liquidation(address debtAccount, uint256 tangDebt, address tokenAddress) external checkTANGParam(tangDebt) nonReentrant{
 
-        uint256 tokenAmount = _getTokenAmountWhenBurnTANG(tangDebt,tokenAddress);
+        uint256 tokenAmount = _getTokenAmountWhenLiquidateDebt(tangDebt,tokenAddress);
         _burnTANG(msg.sender, tangDebt);
         
         
@@ -245,6 +245,16 @@ contract TANGEngine is ReentrancyGuard{
      */
     function _getTokenAmountWhenBurnTANG(uint256 tangAmount, address tokenAddress) internal view returns (uint256){
         uint256 tangValue = ( tangAmount * STABLE_COIN_PRICE * (LIQUIDATION_RATIO-LIQUIDATION_PRECISION)) / (LIQUIDATION_PRECISION * FIX_TOKEN_DECIMAL);
+
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(s_tokensPriceDataFeed[tokenAddress]);
+        (,int price,,,) = priceFeed.latestRoundData();
+
+        uint256 tokenAmount = tangValue * FIX_TOKEN_DECIMAL / (uint256(price) * ADDITIONAL_PRICE_DATA_FEED_PRECISION);
+        return tokenAmount;
+    }
+
+    function _getTokenAmountWhenLiquidateDebt(uint256 tangAmount, address tokenAddress) internal view returns (uint256){
+        uint256 tangValue = ( tangAmount * STABLE_COIN_PRICE * (LIQUIDATION_BONUS+LIQUIDATION_PRECISION)) / (LIQUIDATION_PRECISION * FIX_TOKEN_DECIMAL);
 
         AggregatorV3Interface priceFeed = AggregatorV3Interface(s_tokensPriceDataFeed[tokenAddress]);
         (,int price,,,) = priceFeed.latestRoundData();

@@ -180,7 +180,7 @@ contract TANGEngineTest is Test {
         // user2 替 user1 进行清算
         testDepositBTC();
         vm.expectEmit();
-        uint256 tokenAmount = _getBTCAmountWhenBurnTANG(GET_TANG_AMOUNT);
+        uint256 tokenAmount = _getBTCAmountWhenLiquidateDebt(GET_TANG_AMOUNT);
         emit TANGEngine_Liquidation(user2, user, address(wbtc),tokenAmount , GET_TANG_AMOUNT);
         vm.prank(user2);
         tangEngine.liquidation(user,GET_TANG_AMOUNT,address(wbtc));
@@ -194,6 +194,17 @@ contract TANGEngineTest is Test {
 
     function _getBTCAmountWhenBurnTANG(uint256 tangAmount) private view returns(uint256) {
         uint256 tangValue = ( tangAmount * STABLE_COIN_PRICE * (LIQUIDATION_RATIO-LIQUIDATION_PRECISION)) / (LIQUIDATION_PRECISION * FIX_TOKEN_DECIMAL);
+        console.log("tangValue=",tangValue);
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(chainLinkPriceFeed.priceFeedBTC2USD);
+        (,int price,,,) = priceFeed.latestRoundData();
+        uint256 tokenAmount = (tangValue * FIX_TOKEN_DECIMAL) / (uint256(price) * ADDITIONAL_PRICE_DATA_FEED_PRECISION);
+        console.log("tangValue=%s price =%s ",tangValue * PRICE_DATA_FEED_DECIMALS,uint256(price));
+        console.log("tokenAmount=",tokenAmount);
+        return tokenAmount;
+    }
+
+    function _getBTCAmountWhenLiquidateDebt(uint256 tangAmount) private view returns(uint256) {
+        uint256 tangValue = ( tangAmount * STABLE_COIN_PRICE * (LIQUIDATION_BONUS+LIQUIDATION_PRECISION)) / (LIQUIDATION_PRECISION * FIX_TOKEN_DECIMAL);
         console.log("tangValue=",tangValue);
         AggregatorV3Interface priceFeed = AggregatorV3Interface(chainLinkPriceFeed.priceFeedBTC2USD);
         (,int price,,,) = priceFeed.latestRoundData();
