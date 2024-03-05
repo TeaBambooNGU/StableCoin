@@ -2,5 +2,10 @@
 src = "src"
 out = "out"
 libs = ["lib"]
+[invariant]
+runs = 256
+depth = 64
+fail_on_revert = false
+call_override = false #测试可重入攻击  默认false 允许在运行不变测试时覆盖不安全的外部调用。 例如： 重入检查
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

@@ -310,7 +310,7 @@ contract TANGEngine is ReentrancyGuard{
     function _getTokenValue(address token, uint256 amount) internal view returns (uint256){
         AggregatorV3Interface priceFeed = AggregatorV3Interface(s_tokensPriceDataFeed[token]);
         (,int price,,,) = priceFeed.latestRoundData();
-        uint256 tokenValue = (amount * uint(price) * ADDITIONAL_PRICE_DATA_FEED_PRECISION) /FIX_TOKEN_DECIMAL;
+        uint256 tokenValue = (amount * uint256(price) * ADDITIONAL_PRICE_DATA_FEED_PRECISION) /FIX_TOKEN_DECIMAL;
         return tokenValue;
     }
 

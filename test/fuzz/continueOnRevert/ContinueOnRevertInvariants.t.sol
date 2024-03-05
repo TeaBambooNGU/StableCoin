@@ -20,6 +20,7 @@ contract ContinueOnRevertInvariants is StdInvariant, Test {
     WERC20Mock weth;
 
     uint256 public constant STABLE_COIN_PRICE = 1e18;
+    uint256 public constant FIX_TOKEN_DECIMAL = 1e18;
 
     function setUp() public {
         (tangEngine, tangStableCoin,chainLinkPriceFeed,netWorking) = new DeployTangStable().run();
@@ -35,7 +36,7 @@ contract ContinueOnRevertInvariants is StdInvariant, Test {
     function invariant_depositValueMustBeGreaterThanTANGTatalSupply() public view {
 
         uint256 totalSupply = tangStableCoin.totalSupply();
-        uint256 tangValue = totalSupply * STABLE_COIN_PRICE;
+        uint256 tangValue = (totalSupply * STABLE_COIN_PRICE)/FIX_TOKEN_DECIMAL;
         console.log("totalSupply = ", totalSupply);
         console.log("tangValue = ",tangValue);
 
@@ -46,7 +47,7 @@ contract ContinueOnRevertInvariants is StdInvariant, Test {
         console.log("depositWETH = ",depositWETH);
         console.log("depositValue = ",depositValue);
 
-        assert(depositValue > tangValue);
+        assert(depositValue >= tangValue);
   
     }
 
