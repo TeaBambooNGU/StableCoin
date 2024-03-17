@@ -1,66 +1,39 @@
-## Foundry
+## StableCoin 稳定币TANG
+### 开发框架 Foundry
+### 基本参数
+1. 支持质押的资产：WBTC 和 WETH
+2. 质押资产和TANG的转化比（健康因子）：150% 
+3. 质押资产的价格数据源： ChainLink预言机
+4. 清算时的额外奖励份额 10%
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
-
-Foundry consists of:
-
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
-
-## Documentation
-
-https://book.getfoundry.sh/
-
-## Usage
-
-### Build
-
-```shell
-$ forge build
+### 安装依赖库
+#### chainLink 预言机依赖
 ```
-
-### Test
-
-```shell
-$ forge test
+ forge install smartcontractkit/chainlink-brownie-contracts  --no-commit
 ```
-
-### Format
-
-```shell
-$ forge fmt
+#### OpenZeppelin 三方库依赖
 ```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
+forge install Openzeppelin/openzeppelin-contracts-upgradeable --no-commit
 ```
-
-### Anvil
-
-```shell
-$ anvil
+### .env环境文件配置
 ```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+SEPOLIA_RPC_URL=xxxx
+SEPOLIA_WALLET_KEY=xxx
+SEPOLIA_WALLET=xxx
+ANVIL_WALLET_KEY=xxx
+ANVIL_WALLET=xxx
+ETHERSCAN_API_KEY=xxxx
 ```
-
-### Cast
-
-```shell
-$ cast <subcommand>
+### 完成单元测试 模糊测试
+#### 本地anvil环境
 ```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+forge test
+```
+#### SEPOLIA环境
+```
+forge test --fork-url $SEPOLIA_RPC_URL
+```
+#### 获得测试覆盖率
+```
+forge coverage
 ```
