@@ -13,7 +13,7 @@
 ```
 #### OpenZeppelin 三方库依赖
 ```
-forge install Openzeppelin/openzeppelin-contracts-upgradeable --no-commit
+forge install Openzeppelin/openzeppelin-contracts --no-commit
 ```
 ### .env环境文件配置
 ```
