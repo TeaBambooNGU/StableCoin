@@ -22,18 +22,25 @@ contract ContinueOnRevertInvariants is StdInvariant, Test {
     uint256 public constant STABLE_COIN_PRICE = 1e18;
     uint256 public constant FIX_TOKEN_DECIMAL = 1e18;
 
+    modifier onlyInAnvil() {
+        if(block.chainid != 31337){
+            return;
+        }  
+        _;    
+    }
+
     function setUp() public {
         (tangEngine, tangStableCoin,chainLinkPriceFeed,netWorking) = new DeployTangStable().run();
         wbtc = WERC20Mock(payable(chainLinkPriceFeed.addressWBTC));
         weth = WERC20Mock(payable(chainLinkPriceFeed.addressWETH));   
 
-        continueOnRevertHandler = new ContinueOnRevertHandler(address(tangEngine), address(tangStableCoin),address(weth),address(wbtc));
-
-        targetContract(address(continueOnRevertHandler));
-
+        if(block.chainid == 31337){
+            continueOnRevertHandler = new ContinueOnRevertHandler(address(tangEngine), address(tangStableCoin),address(weth),address(wbtc));
+            targetContract(address(continueOnRevertHandler));
+        }
     }
     //不变量
-    function invariant_depositValueMustBeGreaterThanTANGTatalSupply() public view {
+    function invariant_depositValueMustBeGreaterThanTANGTatalSupply() public view onlyInAnvil {
 
         uint256 totalSupply = tangStableCoin.totalSupply();
         uint256 tangValue = (totalSupply * STABLE_COIN_PRICE)/FIX_TOKEN_DECIMAL;

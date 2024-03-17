@@ -34,6 +34,8 @@ contract TANGEngineTest is Test {
     uint256 public constant FIX_TOKEN_DECIMAL = 1e18;
     uint256 public constant STABLE_COIN_PRICE = 1e18;
 
+    address public constant WBTC_SPOLIA_OWNER = 0xC959483DBa39aa9E78757139af0e9a2EDEb3f42D;
+
     event TANGEngine_DepositToken(address account, address indexed token, uint256 indexed amount);
     event TANGEngine_MintTangStableCoin(address indexed account, uint256 indexed amount);
     event TANGEngine_BurnTANG(address indexed account, uint256 indexed amount);
@@ -55,12 +57,26 @@ contract TANGEngineTest is Test {
     }
 
     modifier beforeDeposit() {
-        vm.startPrank(user);
-        weth.mint(user,MINTED_TKOEN_AMOUNT);
-        wbtc.mint(user,MINTED_TKOEN_AMOUNT);
-        weth.approve(address(tangEngine),MINTED_TKOEN_AMOUNT);
-        wbtc.approve(address(tangEngine),MINTED_TKOEN_AMOUNT);
-        vm.stopPrank();
+        if(block.chainid == 11155111){
+            vm.deal(user,100000000 ether);
+            vm.startPrank(user);
+            (bool success,) = address(weth).call{value:1000000 ether}(abi.encodeWithSignature("deposit()"));
+            weth.approve(address(tangEngine),MINTED_TKOEN_AMOUNT);
+            vm.stopPrank();
+            // 这个地址 0xC959483DBa39aa9E78757139af0e9a2EDEb3f42D 是 wbtc在链上的owner
+            vm.prank(WBTC_SPOLIA_OWNER);
+            wbtc.mint(user,MINTED_TKOEN_AMOUNT);
+            vm.prank(user);
+            wbtc.approve(address(tangEngine),MINTED_TKOEN_AMOUNT);
+        }else if(block.chainid == 31337) {
+            vm.startPrank(user);
+            weth.mint(user,MINTED_TKOEN_AMOUNT);
+            wbtc.mint(user,MINTED_TKOEN_AMOUNT);
+            weth.approve(address(tangEngine),MINTED_TKOEN_AMOUNT);
+            wbtc.approve(address(tangEngine),MINTED_TKOEN_AMOUNT);
+            vm.stopPrank();
+        }
+
         _;
     }
 
@@ -172,8 +188,9 @@ contract TANGEngineTest is Test {
         testDepositWETHAndGetTANG();
         address user2 = makeAddr("user2");
         //给新的用户user2配置资产 
-        vm.startPrank(user2);
+        vm.prank(WBTC_SPOLIA_OWNER);
         wbtc.mint(user2,MINTED_TKOEN_AMOUNT);
+        vm.startPrank(user2);
         wbtc.approve(address(tangEngine),MINTED_TKOEN_AMOUNT);
         tangEngine.depositAndGetTANG(address(wbtc),MINTED_TKOEN_AMOUNT,GET_TANG_AMOUNT);
         vm.stopPrank();

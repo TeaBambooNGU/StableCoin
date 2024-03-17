@@ -31,7 +31,7 @@ forge test
 ```
 #### SEPOLIA环境
 ```
-forge test --fork-url $SEPOLIA_RPC_URL
+forge test --fork-url $SEPOLIA_RPC_URL --mp test/TANGEngineTest.t.sol
 ```
 #### 获得测试覆盖率
 ```
