@@ -10,13 +10,21 @@
 4. 清算时的额外奖励份额 10%
 
 ### 安装依赖库
+#### 一键安装所需依赖（chainLink，OpenZeppelin，forge-std）
+```
+make install
+```
 #### chainLink 预言机依赖
 ```
- forge install smartcontractkit/chainlink-brownie-contracts  --no-commit
+forge install smartcontractkit/chainlink-brownie-contracts  --no-commit
 ```
 #### OpenZeppelin 三方库依赖
 ```
 forge install Openzeppelin/openzeppelin-contracts --no-commit
+```
+#### forge-std 依赖
+```
+forge install foundry-rs/forge-std --no-commit
 ```
 ### .env环境文件配置
 ```
