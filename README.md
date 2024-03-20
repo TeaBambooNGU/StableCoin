@@ -1,8 +1,8 @@
 ## StableCoin 稳定币TANG
 ### 开发框架 Foundry
 ### SEPOLIA上的合约地址
-- TangStableCoin => 0x25C4D40f5057a4F8eef99826cD7cB5C08A75c0B8
-- TANGEngine     => 0x08CBce327bAe5cE7a5B7Ac9dD0e014D698dF2948
+- TangStableCoin => 0xff4dc3868025ed2A6dE6a0bBaD99F79468756CA8
+- TANGEngine     => 0x25765fa8C6994C17B64770851F33FE24Deb65f7E
 ### 基本参数
 1. 支持质押的资产：WBTC 和 WETH
 2. 质押资产和TANG的转化比（健康因子）：150% 
