@@ -19,25 +19,25 @@ contract TANGEngine is ReentrancyGuard{
     error TANGEngine_RedeemCollateralTooMuch();
     error TANGEngine_TokenTransferFail();
 
-    address[] public s_tokensContractddress;
-    mapping (address tokenAddress => address tokenPriceDataFeedAddress)  public s_tokensPriceDataFeed;
+    address[] private s_tokensContractddress;
+    mapping (address tokenAddress => address tokenPriceDataFeedAddress)  private s_tokensPriceDataFeed;
     TangStableCoin public s_tangStableCoin;
     // 用户抵押的资产
-    mapping (address account => mapping (address tokenAddress => uint256 tokenAmount)) public s_userTokenBalance;
+    mapping (address account => mapping (address tokenAddress => uint256 tokenAmount)) private s_userTokenBalance;
     // 用户已经兑换的稳定币数量
-    mapping (address account => uint256 totalSupplyTANG) s_userTotalSupplyTANG;
+    mapping (address account => uint256 totalSupplyTANG) private s_userTotalSupplyTANG;
     // 用户地址
     address[] public s_usersAccount;
-    mapping (address account => bool) public s_userIsExist;
+    mapping (address account => bool) private s_userIsExist;
 
-    uint256 public constant PRICE_DATA_FEED_DECIMALS = 1e8;
-    uint256 public constant ADDITIONAL_PRICE_DATA_FEED_PRECISION = 1e10;
-    uint256 public constant LIQUIDATION_RATIO = 150;
-    uint256 public constant LIQUIDATION_PRECISION = 100;
-    uint256 public constant LIQUIDATION_BONUS = 10;
-    uint256 public constant MIN_HEALTH_FACTOR = 1e18;
-    uint256 public constant FIX_TOKEN_DECIMAL = 1e18;
-    uint256 public constant STABLE_COIN_PRICE = 1e18;
+    uint256 private constant PRICE_DATA_FEED_DECIMALS = 1e8;
+    uint256 private constant ADDITIONAL_PRICE_DATA_FEED_PRECISION = 1e10;
+    uint256 private constant LIQUIDATION_RATIO = 150;
+    uint256 private constant LIQUIDATION_PRECISION = 100;
+    uint256 private constant LIQUIDATION_BONUS = 10;
+    uint256 private constant MIN_HEALTH_FACTOR = 1e18;
+    uint256 private constant FIX_TOKEN_DECIMAL = 1e18;
+    uint256 private constant STABLE_COIN_PRICE = 1e18;
     
 
     event TANGEngine_HealthFactorNotGOOD(address debtAccount,uint256 indexed tangStableCoinValue, uint256  indexed tokenValue);
@@ -51,8 +51,11 @@ contract TANGEngine is ReentrancyGuard{
         if(tokensContractddress.length != tokensPriceDataFeed.length){
             revert TANGEngine_TokensContractddressLengthNotMatch();
         }
-        for (uint i = 0; i < tokensContractddress.length; i++) {
+        for (uint i = 0; i < tokensContractddress.length;) {
             s_tokensPriceDataFeed[tokensContractddress[i]] = tokensPriceDataFeed[i];
+            unchecked {
+                ++i;
+            }
         }
         s_tangStableCoin = TangStableCoin(tangStableCoin);
         s_tokensContractddress = tokensContractddress;
@@ -275,16 +278,6 @@ contract TANGEngine is ReentrancyGuard{
         }
     }
 
-    // /**
-    //  * 校验提供的稳定币数量能否赎回用户的抵押资产
-    //  * @param account 用户地址
-    //  * @param tangAmount 稳定币数量
-    //  */
-    // function _checkIsCanRedeemCollateralForTANG(address account, uint256 tangAmount) internal view {
-    //     if((tangAmount * LIQUIDATION_RATIO) / LIQUIDATION_PRECISION >=  _getCollateralValue(account)){
-    //         revert TANGEngine_TokenValueNotEnough();
-    //     }
-    // }
 
     //获得用户的抵押物价值
     function _getCollateralValue(address account) internal view returns (uint256){
