@@ -8,7 +8,7 @@
 2. 质押资产和TANG的转化比（健康因子）：150% 
 3. 质押资产的价格数据源： ChainLink预言机
 4. 清算时的额外奖励份额 10%
-
+5. 质押资产时，请把WBTC/WETH的token额度授权给TANGEngine
 ### 安装依赖库
 #### 一键安装所需依赖（chainLink，OpenZeppelin，forge-std）
 ```
